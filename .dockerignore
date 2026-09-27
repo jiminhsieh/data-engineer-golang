@@ -1,0 +1,16 @@
+.git
+.idea
+.pi
+.agents
+.env
+.env.*
+!.env.example
+data
+logs
+*.log
+*.parquet
+*.test
+coverage.*
+openspec
+images
+*.pdf
