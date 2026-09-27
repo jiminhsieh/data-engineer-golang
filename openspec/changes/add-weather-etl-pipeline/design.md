@@ -84,23 +84,23 @@ Each writer creates its partition recursively, writes to a same-directory tempor
 
 *Alternatives considered:* Appending multiple JSON values to one daily file conflicts with valid standalone JSON and is unsafe for concurrent readers. A random suffix avoids collisions but violates deterministic naming and weakens idempotency. Ordinary rename was rejected because it can overwrite its destination.
 
-### 6. Standard logging plus bounded Prometheus labels
+### 6. Standard logging and requirement-aligned Prometheus counters
 
-Create one `log.Logger` backed by an append-opened `logs/etl.log`; optionally mirror to stdout for container diagnostics through `io.MultiWriter` without introducing a logging framework. Messages use stable key-value text (`stage`, `outcome`, event identity when known, and error) and are emitted at each required stage. API keys, DSNs, and request URLs containing credentials are never logged.
+Create one `log.Logger` backed by an append-opened `logs/etl.log`; optionally mirror to stdout for container diagnostics through `io.MultiWriter` without introducing a logging framework. Messages use stable key-value text (`stage`, `outcome`, event identity when known, and error) and are emitted for the assignment's required events: API request success/failure, transformation errors, and successful PostgreSQL/raw/processed saves. API keys, DSNs, and request URLs containing credentials are never logged.
 
-Use the Prometheus Go client and a dedicated registry with these application metrics:
+Update Prometheus counters in the same operation paths that emit those logs; metrics are not derived by parsing the log file. Use the Prometheus Go client and a dedicated registry with only these application metrics:
 
-- `weather_api_requests_total{outcome}`
-- `etl_runs_total{outcome}`
-- `etl_run_duration_seconds`
-- `etl_transform_errors_total`
-- `etl_storage_operations_total{destination,outcome}` for `postgres`, `raw`, and `processed`
-- `etl_storage_errors_total{destination}`
-- `etl_last_success_unixtime`
+- `weather_api_requests_total`: increments once for every API request attempt.
+- `weather_api_requests_success_total`: increments when an API request returns an accepted payload.
+- `weather_api_requests_failure_total`: increments when an API request fails or returns an unacceptable payload.
+- `etl_transform_total`: increments once for every transformation attempt.
+- `etl_transform_success_total`: increments when transformation completes successfully.
+- `etl_transform_errors_total`: increments when transformation fails.
+- `etl_data_saved_total{destination="postgres|raw|processed"}`: increments when data is newly persisted to the named destination. An idempotent duplicate does not increment this counter because no new data was saved.
 
-Only fixed enumerations appear in labels. `/metrics` uses `promhttp`; `/healthz` performs a short context-bounded PostgreSQL ping and emits minimal JSON. Method guards return 405. HTTP handler tests use an isolated registry to avoid global collector collisions.
+For API and transformation counters, the total equals success plus failure/error. `destination` is the only application metric label and has exactly three bounded values. `/metrics` uses `promhttp`; `/healthz` performs a short context-bounded PostgreSQL ping and emits minimal JSON. Method guards return 405. HTTP handler tests use an isolated registry to avoid global collector collisions.
 
-*Alternatives considered:* Only logs do not support alerting or rate/duration analysis. Per-location and per-error metric labels were rejected because they create cardinality and disclosure risks. A structured logging dependency would be unnecessary for the assignment.
+*Alternatives considered:* A single outcome-labeled counter would use fewer metric names, but separate total, success, and failure/error counters make the assignment's required events explicit. Run totals, duration histograms, storage-error counters, and last-success gauges are omitted to keep observability aligned with the requested KISS scope. A structured logging dependency would also be unnecessary.
 
 ### 7. Container, orchestration, and test strategy
 
