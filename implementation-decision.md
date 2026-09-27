@@ -31,8 +31,9 @@ This is for processed zone.
    3. wind
 2. Change the raw JSON response's `dt` field name to `event_time` and convert data from epoch to ISO 8601 timestamp format
 
+
 ## Code Design
 1. Follow KISS.
-2. Don't do over-engineering on logging.
+2. Keep logging and metrics limited to what the [spec](take-home_assignment.md) defines.
 3. Consider unit tests for key logics from the [spec](take-home_assignment.md) and Transformation Logic section.
 4. Skip retries for now since they aren't specified in the [spec](take-home_assignment.md).
