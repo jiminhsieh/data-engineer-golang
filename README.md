@@ -30,7 +30,7 @@ The external API is https://openweathermap.org/api/current?collection=current_fo
 
 #### Storage Layers 
 1. Use the JSONB data type to store raw API responses in PostgreSQL.
-2. The file name is {dt_from_JSON_top-level_field}_{lat}_{lon}.<file_extension>.
+2. The file name is {dt_from_JSON_top-level-field}_{lat}_{lon}.<file_extension>.
 3. Raw/bronze zone
    1. The data format is JSON, but AVRO could be a better alternative. 
    2. I chose JSON because it is the native format of the API response and remains easily human-readable.
