@@ -63,6 +63,9 @@ func TestClientFailuresAreSingleAttemptAndSecretSafe(t *testing.T) {
 			if strings.Contains(err.Error(), "top-secret") {
 				t.Fatal("secret leaked")
 			}
+			if tt.name == "timeout" && !strings.Contains(err.Error(), "timeout") {
+				t.Fatalf("unexpected timeout error: %v", err)
+			}
 			if calls.Load() != 1 {
 				t.Fatalf("calls=%d", calls.Load())
 			}

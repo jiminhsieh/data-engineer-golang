@@ -45,7 +45,13 @@ func (c *Client) Fetch(ctx context.Context) (Result, error) {
 	}
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return Result{}, fmt.Errorf("weather request failed: %w", redactError(err))
+		kind := "network error"
+		if errors.Is(err, context.DeadlineExceeded) {
+			kind = "timeout"
+		} else if errors.Is(err, context.Canceled) {
+			kind = "canceled"
+		}
+		return Result{}, fmt.Errorf("weather request failed: %s", kind)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -68,17 +74,4 @@ func (c *Client) Fetch(ctx context.Context) (Result, error) {
 		return Result{}, err
 	}
 	return Result{Raw: raw, Weather: decoded}, nil
-}
-
-type safeError struct{ kind string }
-
-func (e safeError) Error() string { return e.kind }
-func redactError(err error) error {
-	if errors.Is(err, context.DeadlineExceeded) {
-		return safeError{kind: "timeout"}
-	}
-	if errors.Is(err, context.Canceled) {
-		return safeError{kind: "canceled"}
-	}
-	return safeError{kind: "network error"}
 }
