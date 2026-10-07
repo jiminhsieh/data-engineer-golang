@@ -59,7 +59,7 @@ func run(ctx context.Context, cfg config.Config, connect connectFunc) error {
 	client := weather.NewClient(cfg.APIBaseURL, cfg.APIKey, cfg.Latitude, cfg.Longitude, cfg.HTTPTimeout)
 	writer := lake.NewWriter(cfg.DataDir, lake.JSONEncoder{})
 	worker := pipeline.New(client, repo, writer, transform.Weather, logger.Logger, metrics)
-	server := &http.Server{Addr: cfg.HTTPAddr, Handler: observability.Handler(metrics, observability.BoundedPinger{Pinger: repo, Timeout: min(cfg.HTTPTimeout, 2*time.Second)}), ReadHeaderTimeout: 5 * time.Second}
+	server := &http.Server{Addr: cfg.HTTPAddr, Handler: observability.Handler(metrics, repo, min(cfg.HTTPTimeout, 2*time.Second)), ReadHeaderTimeout: 5 * time.Second}
 	serverErrors := make(chan error, 1)
 	go func() {
 		err := server.ListenAndServe()

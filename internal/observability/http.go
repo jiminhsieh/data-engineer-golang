@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func Handler(metrics *Metrics, pinger Pinger) http.Handler {
+type Pinger interface{ Ping(context.Context) error }
+
+func Handler(metrics *Metrics, pinger Pinger, timeout time.Duration) http.Handler {
 	mux := http.NewServeMux()
 	metricsHandler := promhttp.HandlerFor(metrics.Registry, promhttp.HandlerOpts{})
 	mux.Handle("/metrics", getOnly(metricsHandler))
@@ -16,7 +19,9 @@ func Handler(metrics *Metrics, pinger Pinger) http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		status := "ok"
 		code := http.StatusOK
-		if pinger.Ping(r.Context()) != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), timeout)
+		defer cancel()
+		if pinger.Ping(ctx) != nil {
 			status = "unhealthy"
 			code = http.StatusServiceUnavailable
 		}

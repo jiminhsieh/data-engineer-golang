@@ -1,13 +1,11 @@
 package observability
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -47,20 +45,4 @@ func NewMetrics() *Metrics {
 		m.DataSaved.WithLabelValues(d)
 	}
 	return m
-}
-
-type Pinger interface{ Ping(context.Context) error }
-type BoundedPinger struct {
-	Pinger  Pinger
-	Timeout time.Duration
-}
-
-func (b BoundedPinger) Ping(ctx context.Context) error {
-	timeout := b.Timeout
-	if timeout <= 0 {
-		timeout = 2 * time.Second
-	}
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	return b.Pinger.Ping(ctx)
 }

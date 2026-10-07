@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLogAppends(t *testing.T) {
@@ -39,7 +40,12 @@ func TestMetricsAndHandlers(t *testing.T) {
 	m.TransformTotal.Inc()
 	m.TransformErrors.Inc()
 	m.DataSaved.WithLabelValues("raw").Inc()
-	h := Handler(m, PingFunc(func(context.Context) error { return nil }))
+	h := Handler(m, PingFunc(func(ctx context.Context) error {
+		if _, ok := ctx.Deadline(); !ok {
+			t.Error("health ping has no deadline")
+		}
+		return nil
+	}), time.Second)
 	r := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
@@ -57,7 +63,7 @@ func TestMetricsAndHandlers(t *testing.T) {
 		code   int
 		status string
 	}{{nil, 200, "ok"}, {errors.New("down"), 503, "unhealthy"}} {
-		hh := Handler(NewMetrics(), PingFunc(func(context.Context) error { return tc.err }))
+		hh := Handler(NewMetrics(), PingFunc(func(context.Context) error { return tc.err }), time.Second)
 		ww := httptest.NewRecorder()
 		hh.ServeHTTP(ww, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 		b, _ := io.ReadAll(ww.Result().Body)
