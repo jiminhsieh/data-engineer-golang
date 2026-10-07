@@ -1,11 +1,9 @@
 package weather
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 )
 
@@ -68,15 +66,8 @@ type Current struct {
 
 func Decode(raw []byte) (Current, error) {
 	var value Current
-	dec := json.NewDecoder(bytes.NewReader(raw))
-	if err := dec.Decode(&value); err != nil {
+	if err := json.Unmarshal(raw, &value); err != nil {
 		return Current{}, fmt.Errorf("decode weather response: %w", err)
-	}
-	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		if err == nil {
-			return Current{}, errors.New("decode weather response: multiple JSON values")
-		}
-		return Current{}, fmt.Errorf("decode weather response trailing data: %w", err)
 	}
 	if value.DT <= 0 {
 		return Current{}, errors.New("weather response has invalid source dt")
