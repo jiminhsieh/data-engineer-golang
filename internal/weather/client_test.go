@@ -54,7 +54,8 @@ func TestClientFailuresAreSingleAttemptAndSecretSafe(t *testing.T) {
 			var calls atomic.Int64
 			s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls.Add(1); tt.handler.ServeHTTP(w, r) }))
 			defer s.Close()
-			c := NewClientWithHTTP(s.URL, "top-secret", 1, 1, &http.Client{Timeout: tt.timeout}, tt.max)
+			c := NewClient(s.URL, "top-secret", 1, 1, tt.timeout)
+			c.maxBytes = tt.max
 			_, err := c.Fetch(context.Background())
 			if err == nil {
 				t.Fatal("wanted error")

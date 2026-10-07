@@ -29,10 +29,6 @@ func NewClient(baseURL, apiKey string, latitude, longitude float64, timeout time
 	return &Client{baseURL: baseURL, apiKey: apiKey, latitude: latitude, longitude: longitude, http: &http.Client{Timeout: timeout}, maxBytes: DefaultMaxResponseBytes}
 }
 
-func NewClientWithHTTP(baseURL, apiKey string, latitude, longitude float64, client *http.Client, maxBytes int64) *Client {
-	return &Client{baseURL: baseURL, apiKey: apiKey, latitude: latitude, longitude: longitude, http: client, maxBytes: maxBytes}
-}
-
 func (c *Client) Fetch(ctx context.Context) (Result, error) {
 	u, err := url.Parse(c.baseURL)
 	if err != nil {
