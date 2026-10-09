@@ -39,6 +39,17 @@ The external API is https://openweathermap.org/api/current?collection=current_fo
    1. The data format is parquet.
    2. I chose Parquet because it is optimized for columnar read performance and minimal storage overhead.
 
+## Agentic Software Factory
+
+I built this repository with a spec-driven agent workflow:
+
+`Assignment → requirements and decisions → plan → implementation and verification → simplification`
+
+1. Converted the assignment into a Markdown requirement and wrote down [implementation decisions](implementation-decision.md).
+2. Used [Pi Agent](https://pi.dev/) with [OpenSpec](https://openspec.dev/) to create the [proposal](openspec/changes/add-weather-etl-pipeline/proposal.md), [design](openspec/changes/add-weather-etl-pipeline/design.md), specifications, and [task list](openspec/changes/add-weather-etl-pipeline/tasks.md).
+3. Pi implemented the tasks and verified the result with formatting, vetting, tests, builds, and OpenSpec validation.
+4. [Ponytail](https://github.com/dietrichgebert/ponytail) reviewed the code for over-engineering, and its simplifications were applied.
+
 ## Questions
 1. What's the usage of PostgreSQL except it will be the first place we store the external API data?
 2. Do we need to consider retry and idempotent writing?
